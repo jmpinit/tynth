@@ -1,0 +1,29 @@
+.nolist
+    #include    "ti83plus.inc"
+.list
+.org    $9D93
+.db    t2ByteTok, tAsmCmp
+
+;program code
+Start:
+	ld		HL, data
+	ld		B, 42
+SendLoop:
+	ld		A, (HL)
+	b_call(_SendAByte)
+	inc		HL
+	djnz	SendLoop
+	ret
+
+data:
+	.db		$00, $E7, $01, $1F, $02, $82
+	.db		$03, $01, $04, $80, $05, $06
+	.db		$06, $47, $07, $CB, $08, $4B
+	.db		$09, $76, $0A, $01, $0B, $80
+	.db		$0C, $07, $0D, $29, $0E, $E9
+	.db		$0F, $07, $10, $E5, $11, $02
+	.db		$12, $00, $13, $01, $14, $29
+	
+.end
+.end
+

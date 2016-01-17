@@ -1,0 +1,27 @@
+0003   0000             .list
+0004   9D93             .org    $9D93
+0005   9D93 BB 6D       .db    t2ByteTok, tAsmCmp
+0006   9D95             
+0007   9D95             ;program code
+0008   9D95             Start:
+0009   9D95 3E 00       	ld		A, 0
+0010   9D97 EF          	b_call(_SendAByte)
+0010   9D98 E5 4E       
+0011   9D9A 3E 00       	ld		A, 0
+0012   9D9C EF          	b_call(_SendAByte)
+0012   9D9D E5 4E       
+0013   9D9F 3E 01       	ld		A, 1
+0014   9DA1 EF          	b_call(_SendAByte)
+0014   9DA2 E5 4E       
+0015   9DA4 EF          	b_call(_RclAns)
+0015   9DA5 D7 4A       
+0016   9DA7 EF          	b_call(_ConvOP1)
+0016   9DA8 EF 4A       
+0017   9DAA 7B          	ld		A, E
+0018   9DAB EF          	b_call(_SendAByte)
+0018   9DAC E5 4E       
+0019   9DAE C9          	ret
+0020   9DAF             .end
+0021   9DAF             .end
+0022   9DAF             
+tasm: Number of errors = 0

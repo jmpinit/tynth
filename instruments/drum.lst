@@ -1,0 +1,36 @@
+0003   0000             .list
+0004   9D93             .org    $9D93
+0005   9D93 BB 6D       .db    t2ByteTok, tAsmCmp
+0006   9D95             
+0007   9D95             ;program code
+0008   9D95             Start:
+0009   9D95 21 A2 9D    	ld		HL, data
+0010   9D98 06 2A       	ld		B, 42
+0011   9D9A             SendLoop:
+0012   9D9A 7E          	ld		A, (HL)
+0013   9D9B EF          	b_call(_SendAByte)
+0013   9D9C E5 4E       
+0014   9D9E 23          	inc		HL
+0015   9D9F 10 F9       	djnz	SendLoop
+0016   9DA1 C9          	ret
+0017   9DA2             
+0018   9DA2             data:
+0019   9DA2 00 E7 01 1F 	.db		$00, $E7, $01, $1F, $02, $82
+0019   9DA6 02 82 
+0020   9DA8 03 01 04 80 	.db		$03, $01, $04, $80, $05, $06
+0020   9DAC 05 06 
+0021   9DAE 06 47 07 CB 	.db		$06, $47, $07, $CB, $08, $4B
+0021   9DB2 08 4B 
+0022   9DB4 09 76 0A 01 	.db		$09, $76, $0A, $01, $0B, $80
+0022   9DB8 0B 80 
+0023   9DBA 0C 07 0D 29 	.db		$0C, $07, $0D, $29, $0E, $E9
+0023   9DBE 0E E9 
+0024   9DC0 0F 07 10 E5 	.db		$0F, $07, $10, $E5, $11, $02
+0024   9DC4 11 02 
+0025   9DC6 12 00 13 01 	.db		$12, $00, $13, $01, $14, $29
+0025   9DCA 14 29 
+0026   9DCC             	
+0027   9DCC             .end
+0028   9DCC             .end
+0029   9DCC             
+tasm: Number of errors = 0

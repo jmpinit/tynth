@@ -1,0 +1,230 @@
+.nolist
+    #include    "ti83plus.inc"
+.list
+.org    $9D93
+.db    t2ByteTok, tAsmCmp
+
+;============
+;program code
+;============
+Start:
+	b_call(_GrBufClr)
+	b_call(_GrBufCpy)
+	
+	ld		A, 0
+	ld		(pCol), A
+	ld		A, 0
+	ld		(pRow), A
+	
+	ld		HL, hello
+	call	PutStr
+	
+	ret
+	
+;INPUTS: HL contains the start address of a null-terminated string
+;DESTROYS: A, BC, DE, HL
+PutStr:
+	ld		A, (HL)  		;load next char from string
+	
+	or		A				;if byte is zero exit loop
+	ret		Z
+	
+	push	HL				;draw the char
+	call	PutChar
+	pop		HL
+	
+	inc		HL				;increment the pointer
+	
+	jr		PutStr
+
+;INPUTS: A contains the ascii character to draw
+;DESTROYS: A, BC, DE, HL
+PutChar:
+	sub		48				;get offset
+	ret		C				;exit if less than '0'
+	cp		98				;exit if greater than 'Z'
+	ret		NC
+	
+	ld		B, A			;multiply by 3
+	ld		A, 0
+PutChar1:
+	add		A, 3
+	djnz	PutChar1
+	
+	ld		HL, font
+	ld		DE, $00
+	ld		E, A
+	add		HL, DE
+	ld		D, H
+	ld		E, L
+	call	DrawCMap
+	
+	ld		HL, pCol		;increment the column
+	ld		A, (HL)
+	inc		A
+	ld		(HL), A
+	
+	cp		24				;check if column is off screen
+	ret		NZ
+	
+	ld		(HL), 0			;reset column to zero if off screen
+	
+	ld		HL, pRow		;increment row
+	inc		(HL)
+	
+	ret
+
+;INPUTS: DE contains address of start of character map
+;DESTROYS: A, BC, DE, HL
+DrawCMap:
+	push	DE
+	call	GetScrPos
+	pop		DE
+	
+	ld		B, 3			;chunk count
+	
+	ld		A, (pCol)
+	and		$01				;we only want the last bit
+	jr		NZ, DrawCMapOdd
+	
+DrawCMapEven:
+	ld		A, (HL)			;clear the left part of the byte on screen
+	and		$0F
+	ld		(HL), A
+	
+	ld		A, (DE)			;get left nibble of current byte of charmap
+	and		$F0
+	ld		C, A
+	ld		A, (HL)			;write left nibble to screen
+	or		C
+	ld		(HL), A
+	
+	push	DE				;save DE
+	ld		DE, 12			;increase screen position on row
+	add		HL, DE
+	pop		DE				;restore DE
+	
+	ld		A, (HL)			;clear the left part of the byte on screen
+	and		$0F
+	ld		(HL), A
+	
+	ld		A, (DE)			;get right nibble of current byte of charmap
+	and		$0F
+	
+	sla		A				;shift right nibble to left
+	sla		A
+	sla		A
+	sla		A
+	and		$F0
+	ld		C, A
+	
+	ld		A, (HL)			;write right nibble to screen
+	or		C
+	ld		(HL), A
+	
+	push	DE				;save DE
+	ld		DE, 12			;increase screen position on row
+	add		HL, DE
+	pop		DE				;restore DE
+	
+	inc		DE				;increment map pointer
+	
+	djnz	DrawCMapEven
+	
+	b_call(_GrBufCpy)		;copy buffer to screen
+	
+	ret
+DrawCMapOdd:
+	ld		A, (HL)			;clear the right part of the byte on screen
+	and		$F0
+	ld		(HL), A
+	
+	ld		A, (DE)			;get left nibble of current byte of charmap
+	and		$F0
+	
+	sra		A				;shift left nibble to right
+	sra		A
+	sra		A
+	sra		A
+	and		$0F
+	ld		C, A
+	
+	ld		A, (HL)			;write left nibble to screen
+	or		C
+	ld		(HL), A
+	
+	push	DE				;save DE
+	ld		DE, 12			;increase screen position on row
+	add		HL, DE
+	pop		DE				;restore DE
+	
+	ld		A, (HL)			;clear the right part of the byte on screen
+	and		$F0
+	ld		(HL), A
+	
+	ld		A, (DE)			;get right nibble of current byte of charmap
+	and		$0F
+	ld		C, A
+	ld		A, (HL)			;write right nibble to screen
+	or		C
+	ld		(HL), A
+	
+	push	DE				;save DE
+	ld		DE, 12			;increase screen position on row
+	add		HL, DE
+	pop		DE				;restore DE
+	
+	inc		DE				;increment map pointer
+	
+	djnz	DrawCMapOdd
+	
+	b_call(_GrBufCpy)		;copy buffer to screen
+	
+	ret
+	
+;OUTPUTS: HL contains pRow*12*5+pCol
+;DESTROYS: A, BC, DE, HL
+GetScrPos:
+	ld		A, (pRow)		;character row into B
+	ld		B, A
+	ld		A, (pCol)		;character column into C
+	ld		C, A
+	srl		C				;divide column by 2 to get byte column
+	
+	sla		B				;multiply by 5 to get pen row
+	ld		A, B
+	sla		B
+	add		A, B
+	ld		B, A
+GetScrPos1					;multiply by 12
+	ld		HL, PlotSScreen
+	ld		DE, 12
+	jr		Z, GetScrPos3
+GetScrPos2:
+	add		HL, DE
+	djnz	GetScrPos2
+GetScrPos3:
+	ld		DE, $00			;add the column
+	ld		E, C
+	add		HL, DE
+	ret
+	
+;=========	
+;variables
+;=========
+pRow:
+	.db		$00
+pCol:
+	.db		$00
+	
+;====
+;data
+;====
+#include "font.h"
+
+hello:
+	.db		"ABCDEFGHIJKLMNOPQRSTUVWXYZ:;<=>?@", 0
+
+.end
+.end
+

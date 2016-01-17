@@ -1,0 +1,119 @@
+0003   0000             .list
+0004   9D93             .org    $9D93
+0005   9D93 BB 6D       .db    t2ByteTok, tAsmCmp
+0006   9D95             
+0007   9D95             ;program code
+0008   9D95             start:
+0009   9D95 CD 9C 9D    	call	DrawBack
+0010   9D98 CD DF 9D    	call	DrawMode
+0011   9D9B C9          	ret
+0012   9D9C             	
+0013   9D9C             DrawBack:						;draw 2px vertical line in center with 1px vertical lines on edges, skipping first 8 lines
+0014   9D9C 21 40 93    	ld		HL, plotSScreen
+0015   9D9F 11 60 00    	ld		DE, 12*8			;skip first 8 lines
+0016   9DA2 19          	add		HL, DE
+0017   9DA3 06 38       	ld		B, 64-8				;draw on the remaining lines
+0018   9DA5             DrawBack1:
+0019   9DA5 36 80       	ld		(HL), $80			;put pixel on left side
+0020   9DA7 11 05 00    	ld		DE, 5
+0021   9DAA 19          	add		HL, DE
+0022   9DAB 36 01       	ld		(HL), $01			;put pixel on left of middle
+0023   9DAD 23          	inc		HL
+0024   9DAE 36 80       	ld		(HL), $80			;put pixel on right of middle
+0025   9DB0 11 05 00    	ld		DE, 5
+0026   9DB3 19          	add		HL, DE
+0027   9DB4 36 01       	ld		(HL), $01			;put pixel on right side
+0028   9DB6 23          	inc		HL
+0029   9DB7 10 EC       	djnz	DrawBack1
+0030   9DB9             DrawBack2:						;draw 8 evenly spaced horizontal lines
+0031   9DB9 21 40 93    	ld		HL, plotSScreen
+0032   9DBC 11 54 00    	ld		DE, 84
+0033   9DBF 19          	add		HL, DE
+0034   9DC0 0E 08       	ld		C, 8
+0035   9DC2             DrawBack3:
+0036   9DC2 06 0C       	ld		B, 12
+0037   9DC4             DrawBack4:
+0038   9DC4 36 FF       	ld		(HL), $FF
+0039   9DC6 23          	inc		HL
+0040   9DC7 10 FB       	djnz	DrawBack4
+0041   9DC9 11 54 00    	ld		DE, 84
+0042   9DCC 19          	add		HL, DE
+0043   9DCD 0D          	dec		C
+0044   9DCE 20 F2       	jr		nz, DrawBack3
+0045   9DD0 C9          	ret
+0046   9DD1             DrawBack5:						;black out the title bar
+0047   9DD1 21 40 93    	ld		HL, plotSScreen
+0048   9DD4 06 60       	ld		B, 12*8
+0049   9DD6             DrawBack6:
+0050   9DD6 36 FF       	ld		(HL), $FF
+0051   9DD8 23          	inc		HL
+0052   9DD9 10 FB       	djnz	DrawBack6
+0053   9DDB EF          	b_call(_GrBufCpy)			;copy everything to the screen
+0053   9DDC 6A 48       
+0054   9DDE C9          	ret
+0055   9DDF             	
+0056   9DDF             DrawMode:
+0057   9DDF FD CB 05 DE 	set		textInverse, (iy+textFlags)
+0058   9DE3 3E 01       	ld		A, 1
+0059   9DE5 32 D7 86    	ld		(PenCol), A
+0060   9DE8 3E 00       	ld		A, 0
+0061   9DEA 32 D8 86    	ld		(PenRow), A
+0062   9DED 3A 59 9E    	ld		A, (mode)
+0063   9DF0 21 30 9E    	ld		HL, mode0text
+0064   9DF3             	
+0065   9DF3 EF          	b_call(_VPutS)
+0065   9DF4 61 45       
+0066   9DF6             	;b_call(_GrBufCpy)			;copy everything to the screen
+0067   9DF6 FD CB 05 9E 	res		textInverse, (iy+textFlags)
+0068   9DFA C9          	ret
+0069   9DFB             	
+0070   9DFB FE 00       	cp		0
+0071   9DFD CC 1C 9E    	call	z, DrawMode1
+0072   9E00 FE 01       	cp		1
+0073   9E02 CC 20 9E    	call	z, DrawMode2
+0074   9E05 FE 02       	cp		2
+0075   9E07 CC 24 9E    	call	z, DrawMode3
+0076   9E0A FE 03       	cp		3
+0077   9E0C CC 28 9E    	call	z, DrawMode4
+0078   9E0F FE 04       	cp		4
+0079   9E11 CC 2C 9E    	call	z, DrawMode5
+0080   9E14 EF          	b_call(_VPutS)
+0080   9E15 61 45       
+0081   9E17 FD CB 05 9E 	res		textInverse, (iy+textFlags)
+0082   9E1B C9          	ret
+0083   9E1C             DrawMode1:
+0084   9E1C 21 38 9E    	ld		HL, mode1text
+0085   9E1F C9          	ret
+0086   9E20             DrawMode2:
+0087   9E20 21 3F 9E    	ld		HL, mode2text
+0088   9E23 C9          	ret
+0089   9E24             DrawMode3:
+0090   9E24 21 46 9E    	ld		HL, mode3text
+0091   9E27 C9          	ret
+0092   9E28             DrawMode4:
+0093   9E28 21 4D 9E    	ld		HL, mode4text
+0094   9E2B C9          	ret
+0095   9E2C             DrawMode5:
+0096   9E2C 21 54 9E    	ld		HL, mode5text
+0097   9E2F C9          	ret
+0098   9E30             	
+0099   9E30             ;variables
+0100   9E30 64 65 66 61 mode0text:	.db "default", 0
+0100   9E34 75 6C 74 00 
+0101   9E38 76 6F 69 63 mode1text:	.db "voice1", 0
+0101   9E3C 65 31 00 
+0102   9E3F 76 6F 69 63 mode2text:	.db "voice2", 0
+0102   9E43 65 32 00 
+0103   9E46 76 6F 69 63 mode3text:	.db "voice3", 0
+0103   9E4A 65 33 00 
+0104   9E4D 66 69 6C 74 mode4text:	.db "filter", 0
+0104   9E51 65 72 00 
+0105   9E54 6D 69 73 63 mode5text:	.db "misc", 0
+0105   9E58 00 
+0106   9E59             
+0107   9E59 00          mode:		.db 0
+0108   9E5A             
+0109   9E5A             .end
+0110   9E5A             .end
+0111   9E5A             
+tasm: Number of errors = 0

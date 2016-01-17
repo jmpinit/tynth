@@ -1,0 +1,110 @@
+.nolist
+    #include    "ti83plus.inc"
+.list
+.org    $9D93
+.db    t2ByteTok, tAsmCmp
+
+;program code
+start:
+	call	DrawBack
+	call	DrawMode
+	ret
+	
+DrawBack:						;draw 2px vertical line in center with 1px vertical lines on edges, skipping first 8 lines
+	ld		HL, plotSScreen
+	ld		DE, 12*8			;skip first 8 lines
+	add		HL, DE
+	ld		B, 64-8				;draw on the remaining lines
+DrawBack1:
+	ld		(HL), $80			;put pixel on left side
+	ld		DE, 5
+	add		HL, DE
+	ld		(HL), $01			;put pixel on left of middle
+	inc		HL
+	ld		(HL), $80			;put pixel on right of middle
+	ld		DE, 5
+	add		HL, DE
+	ld		(HL), $01			;put pixel on right side
+	inc		HL
+	djnz	DrawBack1
+DrawBack2:						;draw 8 evenly spaced horizontal lines
+	ld		HL, plotSScreen
+	ld		DE, 84
+	add		HL, DE
+	ld		C, 8
+DrawBack3:
+	ld		B, 12
+DrawBack4:
+	ld		(HL), $FF
+	inc		HL
+	djnz	DrawBack4
+	ld		DE, 84
+	add		HL, DE
+	dec		C
+	jr		nz, DrawBack3
+DrawBack5:						;black out the title bar
+	ld		HL, plotSScreen
+	ld		B, 12*8
+DrawBack6:
+	ld		(HL), $FF
+	inc		HL
+	djnz	DrawBack6
+	b_call(_GrBufCpy)			;copy everything to the screen
+	ret
+	
+DrawMode:
+	set		textInverse, (iy+textFlags)
+	ld		A, 1
+	ld		(PenCol), A
+	ld		A, 0
+	ld		(PenRow), A
+	ld		A, (mode)
+	ld		HL, mode0text
+	
+	b_call(_VPutS)
+	;b_call(_GrBufCpy)			;copy everything to the screen
+	res		textInverse, (iy+textFlags)
+	ret
+	
+	cp		0
+	call	z, DrawMode1
+	cp		1
+	call	z, DrawMode2
+	cp		2
+	call	z, DrawMode3
+	cp		3
+	call	z, DrawMode4
+	cp		4
+	call	z, DrawMode5
+	b_call(_VPutS)
+	res		textInverse, (iy+textFlags)
+	ret
+DrawMode1:
+	ld		HL, mode1text
+	ret
+DrawMode2:
+	ld		HL, mode2text
+	ret
+DrawMode3:
+	ld		HL, mode3text
+	ret
+DrawMode4:
+	ld		HL, mode4text
+	ret
+DrawMode5:
+	ld		HL, mode5text
+	ret
+	
+;variables
+mode0text:	.db "default", 0
+mode1text:	.db "voice1", 0
+mode2text:	.db "voice2", 0
+mode3text:	.db "voice3", 0
+mode4text:	.db "filter", 0
+mode5text:	.db "misc", 0
+
+mode:		.db 0
+
+.end
+.end
+

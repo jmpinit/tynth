@@ -1,0 +1,315 @@
+0003   0000             .list
+0004   9D93             .org    $9D93
+0005   9D93 BB 6D       .db    t2ByteTok, tAsmCmp
+0006   9D95             
+0007   9D95             ;============
+0008   9D95             ;program code
+0009   9D95             ;============
+0010   9D95             Start:
+0011   9D95 EF          	b_call(_GrBufClr)
+0011   9D96 D0 4B       
+0012   9D98 EF          	b_call(_GrBufCpy)
+0012   9D99 6A 48       
+0013   9D9B             	
+0014   9D9B CD A2 9D    	call	DrawSliders
+0015   9D9E EF          	b_call(_GrBufCpy)
+0015   9D9F 6A 48       
+0016   9DA1             	
+0017   9DA1 C9          	ret
+0018   9DA2             	
+0019   9DA2             DrawSliders:
+0020   9DA2 21 98 9E    	ld		HL, pRow
+0021   9DA5 36 01       	ld		(HL), 1
+0022   9DA7 21 99 9E    	ld		HL, pCol
+0023   9DAA 36 00       	ld		(HL), 0
+0024   9DAC             	
+0025   9DAC 0E 08       	ld		C, 8
+0026   9DAE             DrawSliders1:
+0027   9DAE 06 0C       	ld		B, 12
+0028   9DB0             DrawSliders2:
+0029   9DB0 3E 3A       	ld		A, ':'
+0030   9DB2 C5          	push	BC
+0031   9DB3 CD D0 9D    	call	PutChar
+0032   9DB6 C1          	pop		BC
+0033   9DB7             	
+0034   9DB7 21 99 9E    	ld		HL, pCol
+0035   9DBA 34          	inc		(HL)
+0036   9DBB             	
+0037   9DBB 10 F3       	djnz	DrawSliders2
+0038   9DBD             	
+0039   9DBD 21 98 9E    	ld		HL, pRow
+0040   9DC0 34          	inc		(HL)
+0041   9DC1             	
+0042   9DC1 0D          	dec		C
+0043   9DC2 20 EA       	jr		NZ, DrawSliders1
+0044   9DC4             	
+0045   9DC4 C9          	ret
+0046   9DC5             	
+0047   9DC5             ;INPUTS: HL contains the start address of a null-terminated string
+0048   9DC5             ;DESTROYS: A, BC, DE, HL
+0049   9DC5             PutStr:
+0050   9DC5 7E          	ld		A, (HL)  		;load next char from string
+0051   9DC6             	
+0052   9DC6 B7          	or		A				;if byte is zero exit loop
+0053   9DC7 C8          	ret		Z
+0054   9DC8             	
+0055   9DC8 E5          	push	HL				;draw the char
+0056   9DC9 CD D0 9D    	call	PutChar
+0057   9DCC E1          	pop		HL
+0058   9DCD             	
+0059   9DCD 23          	inc		HL				;increment the pointer
+0060   9DCE             	
+0061   9DCE 18 F5       	jr		PutStr
+0062   9DD0             
+0063   9DD0             ;INPUTS: A contains the ascii character to draw
+0064   9DD0             ;DESTROYS: A, BC, DE, HL
+0065   9DD0             PutChar:
+0066   9DD0 D6 30       	sub		48				;get offset
+0067   9DD2 D8          	ret		C				;exit if less than '0'
+0068   9DD3 FE 62       	cp		98				;exit if greater than 'Z'
+0069   9DD5 D0          	ret		NC
+0070   9DD6             	
+0071   9DD6 47          	ld		B, A			;multiply by 3
+0072   9DD7 3E 00       	ld		A, 0
+0073   9DD9             PutChar1:
+0074   9DD9 C6 03       	add		A, 3
+0075   9DDB 10 FC       	djnz	PutChar1
+0076   9DDD             	
+0077   9DDD 21 9A 9E    	ld		HL, font
+0078   9DE0 11 00 00    	ld		DE, $00
+0079   9DE3 5F          	ld		E, A
+0080   9DE4 19          	add		HL, DE
+0081   9DE5 54          	ld		D, H
+0082   9DE6 5D          	ld		E, L
+0083   9DE7 CD FA 9D    	call	DrawCMap
+0084   9DEA             	
+0085   9DEA 21 99 9E    	ld		HL, pCol		;increment the column
+0086   9DED 7E          	ld		A, (HL)
+0087   9DEE 3C          	inc		A
+0088   9DEF 77          	ld		(HL), A
+0089   9DF0             	
+0090   9DF0 FE 18       	cp		24				;check if column is off screen
+0091   9DF2 C0          	ret		NZ
+0092   9DF3             	
+0093   9DF3 36 00       	ld		(HL), 0			;reset column to zero if off screen
+0094   9DF5             	
+0095   9DF5 21 98 9E    	ld		HL, pRow		;increment row
+0096   9DF8 34          	inc		(HL)
+0097   9DF9             	
+0098   9DF9 C9          	ret
+0099   9DFA             
+0100   9DFA             ;INPUTS: DE contains address of start of character map
+0101   9DFA             ;DESTROYS: A, BC, DE, HL
+0102   9DFA             DrawCMap:
+0103   9DFA D5          	push	DE
+0104   9DFB CD 68 9E    	call	GetScrPos
+0105   9DFE D1          	pop		DE
+0106   9DFF             	
+0107   9DFF 06 03       	ld		B, 3			;chunk count
+0108   9E01             	
+0109   9E01 3A 99 9E    	ld		A, (pCol)
+0110   9E04 E6 01       	and		$01				;we only want the last bit
+0111   9E06 20 30       	jr		NZ, DrawCMapOdd
+0112   9E08             	
+0113   9E08             DrawCMapEven:
+0114   9E08 7E          	ld		A, (HL)			;clear the left part of the byte on screen
+0115   9E09 E6 0F       	and		$0F
+0116   9E0B 77          	ld		(HL), A
+0117   9E0C             	
+0118   9E0C 1A          	ld		A, (DE)			;get left nibble of current byte of charmap
+0119   9E0D E6 F0       	and		$F0
+0120   9E0F 4F          	ld		C, A
+0121   9E10 7E          	ld		A, (HL)			;write left nibble to screen
+0122   9E11 B1          	or		C
+0123   9E12 77          	ld		(HL), A
+0124   9E13             	
+0125   9E13 D5          	push	DE				;save DE
+0126   9E14 11 0C 00    	ld		DE, 12			;increase screen position on row
+0127   9E17 19          	add		HL, DE
+0128   9E18 D1          	pop		DE				;restore DE
+0129   9E19             	
+0130   9E19 7E          	ld		A, (HL)			;clear the left part of the byte on screen
+0131   9E1A E6 0F       	and		$0F
+0132   9E1C 77          	ld		(HL), A
+0133   9E1D             	
+0134   9E1D 1A          	ld		A, (DE)			;get right nibble of current byte of charmap
+0135   9E1E E6 0F       	and		$0F
+0136   9E20             	
+0137   9E20 CB 27       	sla		A				;shift right nibble to left
+0138   9E22 CB 27       	sla		A
+0139   9E24 CB 27       	sla		A
+0140   9E26 CB 27       	sla		A
+0141   9E28 E6 F0       	and		$F0
+0142   9E2A 4F          	ld		C, A
+0143   9E2B             	
+0144   9E2B 7E          	ld		A, (HL)			;write right nibble to screen
+0145   9E2C B1          	or		C
+0146   9E2D 77          	ld		(HL), A
+0147   9E2E             	
+0148   9E2E D5          	push	DE				;save DE
+0149   9E2F 11 0C 00    	ld		DE, 12			;increase screen position on row
+0150   9E32 19          	add		HL, DE
+0151   9E33 D1          	pop		DE				;restore DE
+0152   9E34             	
+0153   9E34 13          	inc		DE				;increment map pointer
+0154   9E35             	
+0155   9E35 10 D1       	djnz	DrawCMapEven
+0156   9E37             	
+0157   9E37 C9          	ret
+0158   9E38             DrawCMapOdd:
+0159   9E38 7E          	ld		A, (HL)			;clear the right part of the byte on screen
+0160   9E39 E6 F0       	and		$F0
+0161   9E3B 77          	ld		(HL), A
+0162   9E3C             	
+0163   9E3C 1A          	ld		A, (DE)			;get left nibble of current byte of charmap
+0164   9E3D E6 F0       	and		$F0
+0165   9E3F             	
+0166   9E3F CB 2F       	sra		A				;shift left nibble to right
+0167   9E41 CB 2F       	sra		A
+0168   9E43 CB 2F       	sra		A
+0169   9E45 CB 2F       	sra		A
+0170   9E47 E6 0F       	and		$0F
+0171   9E49 4F          	ld		C, A
+0172   9E4A             	
+0173   9E4A 7E          	ld		A, (HL)			;write left nibble to screen
+0174   9E4B B1          	or		C
+0175   9E4C 77          	ld		(HL), A
+0176   9E4D             	
+0177   9E4D D5          	push	DE				;save DE
+0178   9E4E 11 0C 00    	ld		DE, 12			;increase screen position on row
+0179   9E51 19          	add		HL, DE
+0180   9E52 D1          	pop		DE				;restore DE
+0181   9E53             	
+0182   9E53 7E          	ld		A, (HL)			;clear the right part of the byte on screen
+0183   9E54 E6 F0       	and		$F0
+0184   9E56 77          	ld		(HL), A
+0185   9E57             	
+0186   9E57 1A          	ld		A, (DE)			;get right nibble of current byte of charmap
+0187   9E58 E6 0F       	and		$0F
+0188   9E5A 4F          	ld		C, A
+0189   9E5B 7E          	ld		A, (HL)			;write right nibble to screen
+0190   9E5C B1          	or		C
+0191   9E5D 77          	ld		(HL), A
+0192   9E5E             	
+0193   9E5E D5          	push	DE				;save DE
+0194   9E5F 11 0C 00    	ld		DE, 12			;increase screen position on row
+0195   9E62 19          	add		HL, DE
+0196   9E63 D1          	pop		DE				;restore DE
+0197   9E64             	
+0198   9E64 13          	inc		DE				;increment map pointer
+0199   9E65             	
+0200   9E65 10 D1       	djnz	DrawCMapOdd
+0201   9E67             	
+0202   9E67 C9          	ret
+0203   9E68             	
+0204   9E68             ;OUTPUTS: HL contains pRow*96*5+pCol
+0205   9E68             ;DESTROYS: A, BC, DE, HL
+0206   9E68             GetScrPos:
+0207   9E68 3A 98 9E    	ld		A, (pRow)		;character row into B
+0208   9E6B 47          	ld		B, A
+0209   9E6C 3A 99 9E    	ld		A, (pCol)		;character column into C
+0210   9E6F 4F          	ld		C, A
+0211   9E70 CB 39       	srl		C				;divide column by 2 to get byte column
+0212   9E72             	
+0213   9E72 CB 20       	sla		B				;multiply by 6 to get pen row
+0214   9E74 78          	ld		A, B
+0215   9E75 CB 20       	sla		B
+0216   9E77 80          	add		A, B
+0217   9E78 47          	ld		B, A
+0218   9E79             GetScrPos1					;multiply by 9
+0219   9E79 21 40 93    	ld		HL, PlotSScreen
+0220   9E7C 11 0C 00    	ld		DE, 12
+0221   9E7F 28 03       	jr		Z, GetScrPos3
+0222   9E81             GetScrPos2:
+0223   9E81 19          	add		HL, DE
+0224   9E82 10 FD       	djnz	GetScrPos2
+0225   9E84             GetScrPos3:
+0226   9E84 11 00 00    	ld		DE, $00			;add the column
+0227   9E87 59          	ld		E, C
+0228   9E88 19          	add		HL, DE
+0229   9E89 C9          	ret
+0230   9E8A             	
+0231   9E8A             ;=========	
+0232   9E8A             ;variables
+0233   9E8A             ;=========
+0234   9E8A             ;position of cursor
+0235   9E8A             cursorX:
+0236   9E8A 00          	.db		$00
+0237   9E8B             cursorY:
+0238   9E8B 00          	.db		$00
+0239   9E8C             
+0240   9E8C             ;slider values
+0241   9E8C             sliders:
+0242   9E8C 00 00 00 00 	.db		$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+0242   9E90 00 00 00 00 
+0242   9E94 00 00 00 00 
+0243   9E98             
+0244   9E98             ;used for drawing characters
+0245   9E98             pRow:
+0246   9E98 00          	.db		$00
+0247   9E99             pCol:
+0248   9E99 00          	.db		$00
+0249   9E9A             	
+0250   9E9A             ;====
+0251   9E9A             ;data
+0252   9E9A             ;====
+0253   9E9A             #include "font.h"
+0001+  9E9A             font:
+0002+  9E9A 4A EA 40    	.db		$4A,$EA,$40	;0
+0003+  9E9D 4C 44 E0    	.db		$4C,$44,$E0	;1
+0004+  9EA0 E2 E8 E0    	.db		$E2,$E8,$E0	;2
+0005+  9EA3 E2 E2 E0    	.db		$E2,$E2,$E0	;3
+0006+  9EA6 AA E2 20    	.db		$AA,$E2,$20	;4
+0007+  9EA9 E8 E2 E0    	.db		$E8,$E2,$E0	;5
+0008+  9EAC E8 EA E0    	.db		$E8,$EA,$E0	;6
+0009+  9EAF E2 22 20    	.db		$E2,$22,$20	;7
+0010+  9EB2 EA EA E0    	.db		$EA,$EA,$E0	;8
+0011+  9EB5 EA E2 20    	.db		$EA,$E2,$20	;9
+0012+  9EB8 66 66 66    	.db		$66,$66,$66	;:	slider bar
+0013+  9EBB A5 A5 A0    	.db		$A5,$A5,$A0	;;	shaded out
+0014+  9EBE F9 99 F0    	.db		$F9,$99,$F0	;<	unchecked box
+0015+  9EC1 6F FF 60    	.db		$6F,$FF,$60	;=	slider nub
+0016+  9EC4 FF FF F0    	.db		$FF,$FF,$F0	;>	checked box
+0017+  9EC7 00 00 00    	.db		$00,$00,$00	;?	space
+0018+  9ECA D0 90 B0    	.db		$D0,$90,$B0	;@	edit cursor
+0019+  9ECD 4A EA A0    	.db		$4A,$EA,$A0	;A
+0020+  9ED0 CA CA C0    	.db		$CA,$CA,$C0	;B
+0021+  9ED3 68 88 60    	.db		$68,$88,$60	;C
+0022+  9ED6 CA AA C0    	.db		$CA,$AA,$C0	;D
+0023+  9ED9 E8 C8 E0    	.db		$E8,$C8,$E0	;E
+0024+  9EDC E8 C8 80    	.db		$E8,$C8,$80	;F
+0025+  9EDF E8 AA E0    	.db		$E8,$AA,$E0	;G
+0026+  9EE2 AA EA A0    	.db		$AA,$EA,$A0	;H
+0027+  9EE5 E4 44 E0    	.db		$E4,$44,$E0	;I
+0028+  9EE8 22 2A E0    	.db		$22,$2A,$E0	;J
+0029+  9EEB AA CA A0    	.db		$AA,$CA,$A0	;K
+0030+  9EEE 88 88 E0    	.db		$88,$88,$E0	;L
+0031+  9EF1 AE AA A0    	.db		$AE,$AA,$A0	;M
+0032+  9EF4 CA AA A0    	.db		$CA,$AA,$A0	;N
+0033+  9EF7 4A AA 40    	.db		$4A,$AA,$40	;O
+0034+  9EFA CA C8 80    	.db		$CA,$C8,$80	;P
+0035+  9EFD 4A AE C0    	.db		$4A,$AE,$C0	;Q
+0036+  9F00 CA CA A0    	.db		$CA,$CA,$A0	;R
+0037+  9F03 68 42 C0    	.db		$68,$42,$C0	;S
+0038+  9F06 E4 44 40    	.db		$E4,$44,$40	;T
+0039+  9F09 AA AA E0    	.db		$AA,$AA,$E0	;U
+0040+  9F0C AA A4 40    	.db		$AA,$A4,$40	;V
+0041+  9F0F AA AE A0    	.db		$AA,$AE,$A0	;W
+0042+  9F12 AA 4A A0    	.db		$AA,$4A,$A0	;X
+0043+  9F15 AA 44 40    	.db		$AA,$44,$40	;Y
+0044+  9F18 E2 48 E0    	.db		$E2,$48,$E0	;Z0254   9F1B             
+0255   9F1B             hello:
+0256   9F1B 41 42 43 44 	.db		"ABCDEFGHIJKLMNOPQRSTUVWXYZ:;<=>?@", 0
+0256   9F1F 45 46 47 48 
+0256   9F23 49 4A 4B 4C 
+0256   9F27 4D 4E 4F 50 
+0256   9F2B 51 52 53 54 
+0256   9F2F 55 56 57 58 
+0256   9F33 59 5A 3A 3B 
+0256   9F37 3C 3D 3E 3F 
+0256   9F3B 40 00 
+0257   9F3D             
+0258   9F3D             .end
+0259   9F3D             .end
+0260   9F3D             
+tasm: Number of errors = 0

@@ -1,0 +1,61 @@
+.nolist
+    #include    "ti83plus.inc"
+.list
+.org    $9D93
+.db    t2ByteTok, tAsmCmp
+
+;program code
+start:
+	call	DrawMode
+	ret
+	
+DrawMode:
+	set		textInverse, (iy+textFlags)
+	ld		A, 1
+	ld		(PenCol), A
+	ld		A, 0
+	ld		(PenRow), A
+	ld		A, (mode)
+	ld		HL, mode0text
+	cp		0
+	call	z, DrawMode1
+	cp		1
+	call	z, DrawMode2
+	cp		2
+	call	z, DrawMode3
+	cp		3
+	call	z, DrawMode4
+	cp		4
+	call	z, DrawMode5
+	b_call(_VPutS)
+	res		textInverse, (iy+textFlags)
+	ret
+DrawMode1:
+	ld		HL, mode1text
+	ret
+DrawMode2:
+	ld		HL, mode2text
+	ret
+DrawMode3:
+	ld		HL, mode3text
+	ret
+DrawMode4:
+	ld		HL, mode4text
+	ret
+DrawMode5:
+	ld		HL, mode5text
+	ret
+	
+;variables
+mode0title:	.db "default", 0
+mode1title:	.db "voice1", 0
+mode2title:	.db "voice2", 0
+mode3title:	.db "voice3", 0
+mode4title:	.db "filter", 0
+mode5title:	.db "misc", 0
+
+mode:		.db 0
+
+.end
+.end
+
