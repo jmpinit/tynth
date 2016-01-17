@@ -1,0 +1,101 @@
+.nolist
+    #include    "ti83plus.inc"
+.list
+.org    $9D93
+.db    t2ByteTok, tAsmCmp
+
+#define INTRPT_MASK	%00001011
+#define FREQ 		0
+
+;============
+;program code
+;============
+Start:
+	call	SetInterrupt
+	
+	ld		A, %00000000	;make timer go faaasssttt
+	out		(4), A
+	
+	ld		A, %10111111
+	out		(1), A
+	
+Keyloop:
+	in		A, (1)
+	cp		%01111111
+	jr		NZ, Keyloop
+	
+Exit:
+	ld		A, %00000110	;reset timer to default
+	out		(4), A
+	ld		A, %00001011	;enable hardware
+	out		(3), A
+	im		1				;switch back to mode 1
+	
+	ret
+	
+Interrupt:
+    ex		AF, AF'
+	exx
+	xor		A				;disable hardware
+	out		(3), A
+
+	;toggle the bit
+	in		A, (0)
+	xor		$02
+	out		(0), A
+	
+	ld		A, INTRPT_MASK	;enable hardware
+	out		(3), A
+	ex		AF, AF'
+	exx
+	ei
+	ret
+	
+SetInterrupt:
+	di
+
+	ld		HL, Interrupt
+	ld		($993F), HL
+	ld		($997F), HL
+	ld		($99BF), HL
+	ld		($99FF), HL
+
+	ld		A, $99
+	ld		I, A
+	
+	ld		A, INTRPT_MASK
+	out		(3), A
+
+	im		2
+	ei
+	
+	ret
+	
+Delay:
+	nop
+	djnz Delay
+	ret
+	
+;**************************************************************
+;* turn_on-sets white wire high
+;**************************************************************
+turn_on:
+	ld		a, 0D0h		;7 ld set white wire high
+    out		(0), a		;11
+	ret					;10
+	
+;**************************************************************
+;* turn_off-sets white wire low
+;**************************************************************
+turn_off:
+	ld		a, 0D2h		;7 set white wire low
+    out		(0), a		;11
+	ret					;10
+	
+;=========	
+;variables
+;=========
+
+.end
+.end
+
